@@ -495,7 +495,7 @@ void ColumnWithDictionary::Index::insertPositionsRange(const IColumn & column, s
     checkSizeOfType();
 }
 
-void ColumnWithDictionary::Index::check(size_t max_dictionary_size)
+void ColumnWithDictionary::Index::check(size_t /*max_dictionary_size*/)
 {
     /// TODO: remove
     /*
