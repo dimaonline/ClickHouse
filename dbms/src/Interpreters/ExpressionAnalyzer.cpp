@@ -1994,7 +1994,7 @@ void ExpressionAnalyzer::getActionsFromJoinKeys(const ASTPtr & ast, bool no_subq
     if (!node)
         return;
 
-    const auto * table_join = typeid_cast<const ASTTableJoin *>(*node->table_join.get());
+    const auto * table_join = typeid_cast<const ASTTableJoin *>(node->table_join.get());
     if (!table_join)
         return;
 
