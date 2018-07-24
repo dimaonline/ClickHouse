@@ -778,7 +778,7 @@ void Join::joinBlockImpl(Block & block, const Maps & maps) const
             block.safeGetByPosition(i).column = block.safeGetByPosition(i).column->replicate(*offsets_to_replicate);
 
     /// Add columns from right block.
-    for (size_t i = 0; i < key_names_right.size(); i)
+    for (size_t i = 0; i < key_names_right.size(); ++i)
     {
         auto & right_name = key_names_right[i];
         auto & left_name = key_names_left[i];
