@@ -1815,16 +1815,16 @@ const Block & ScopeStack::getSampleBlock() const
 void ExpressionAnalyzer::getRootActions(const ASTPtr & ast, bool no_subqueries, bool only_consts, ExpressionActionsPtr & actions)
 {
     ScopeStack scopes(actions, settings);
+
     ProjectionManipulatorPtr projection_manipulator;
     if (!isThereArrayJoin(ast) && settings.enable_conditional_computation && !only_consts)
-    {
         projection_manipulator = std::make_shared<ConditionalTree>(scopes, context);
-    }
     else
-    {
         projection_manipulator = std::make_shared<DefaultProjectionManipulator>(scopes);
-    }
+
+    getActionsFromJoinKeys(ast, no_subqueries, only_consts, scopes, projection_manipulator);
     getActionsImpl(ast, no_subqueries, only_consts, scopes, projection_manipulator);
+
     actions = scopes.popLevel();
 }
 
@@ -1981,6 +1981,44 @@ bool ExpressionAnalyzer::isThereArrayJoin(const ASTPtr & ast)
         }
         return false;
     }
+}
+
+void ExpressionAnalyzer::getActionsFromJoinKeys(const ASTPtr & ast, bool no_subqueries, bool only_consts,
+                                                ScopeStack & actions_stack, ProjectionManipulatorPtr projection_manipulator)
+{
+    auto ast_select_query = typeid_cast<const ASTSelectQuery *>(ast.get());
+    if (!ast_select_query)
+        return;
+
+    const ASTTablesInSelectQueryElement * node = ast_select_query->join();
+    if (!node)
+        return;
+
+    const auto * table_join = typeid_cast<const ASTTableJoin *>(*node->table_join.get());
+    if (!table_join)
+        return;
+
+    if (table_join->using_expression_list)
+        getActionsImpl(table_join->using_expression_list, no_subqueries, only_consts, actions_stack, projection_manipulator);
+    else if (table_join->on_expression)
+    {
+        std::function<void(const ASTPtr &)> get_actions;
+        get_actions = [&](const ASTPtr & ast)
+        {
+            auto column_name = ast->getColumnName();
+            if (join_key_names_left.end() != std::find(join_key_names_left.begin(), join_key_names_left.end(), column_name))
+                getActionsImpl(ast, no_subqueries, only_consts, actions_stack, projection_manipulator);
+            else
+            {
+                for (auto & child : ast->children)
+                    get_actions(child);
+
+            }
+        };
+
+        get_actions(table_join->on_expression);
+    }
+
 }
 
 void ExpressionAnalyzer::getActionsImpl(const ASTPtr & ast, bool no_subqueries, bool only_consts, ScopeStack & actions_stack,

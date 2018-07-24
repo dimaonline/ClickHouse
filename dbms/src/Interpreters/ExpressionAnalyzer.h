@@ -308,6 +308,10 @@ private:
     void getActionsImpl(const ASTPtr & ast, bool no_subqueries, bool only_consts, ScopeStack & actions_stack,
                         ProjectionManipulatorPtr projection_manipulator);
 
+    /// If ast is ASTSelectQuery with JOIN, add actions for JOIN key columns.
+    void getActionsFromJoinKeys(const ASTPtr & ast, bool no_subqueries, bool only_consts, ScopeStack & actions_stack,
+                                ProjectionManipulatorPtr projection_manipulator);
+
     void getRootActions(const ASTPtr & ast, bool no_subqueries, bool only_consts, ExpressionActionsPtr & actions);
 
     void getActionsBeforeAggregation(const ASTPtr & ast, ExpressionActionsPtr & actions, bool no_subqueries);
