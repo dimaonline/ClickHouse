@@ -2000,14 +2000,21 @@ void ExpressionAnalyzer::getActionsFromJoinKeys(const ASTTableJoin & table_join,
         std::function<void(const ASTPtr &)> get_actions;
         get_actions = [&](const ASTPtr & ast)
         {
-            auto column_name = ast->getColumnName();
-            if (join_key_names_left.end() != std::find(join_key_names_left.begin(), join_key_names_left.end(), column_name))
+            bool key_expr = false;
+
+            if (const auto * ast_function = typeid_cast<const ASTFunction *>(ast.get()))
+            {
+                auto column_name = ast_function->getColumnName();
+                key_expr = join_key_names_left.end()
+                           != std::find(join_key_names_left.begin(), join_key_names_left.end(), column_name);
+            }
+
+            if (key_expr)
                 getActionsImpl(ast, no_subqueries, only_consts, scopes, projection_manipulator);
             else
             {
                 for (auto & child : ast->children)
                     get_actions(child);
-
             }
         };
 
