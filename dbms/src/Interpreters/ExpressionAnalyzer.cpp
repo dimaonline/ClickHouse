@@ -2943,9 +2943,9 @@ void ExpressionAnalyzer::collectJoinedColumnsFromJoinOnExpr()
             {
                 auto left_num_components = getNumComponentsToStripInOrderToTranslateQualifiedName(*identifier, left_source_names);
                 auto right_num_components = getNumComponentsToStripInOrderToTranslateQualifiedName(*identifier, right_source_names);
-                if (left_num_components >= right_num_components)
+                if (left_num_components > right_num_components)
                     return {identifier, nullptr};
-                if (left_num_components <= right_num_components)
+                if (left_num_components < right_num_components)
                     return {nullptr, identifier};
             }
             return {};
