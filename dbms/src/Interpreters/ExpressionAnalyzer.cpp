@@ -321,7 +321,7 @@ static size_t getNumComponentsToStripInOrderToTranslateQualifiedName(const ASTId
 {
     size_t num_qualifiers_to_strip = 0;
 
-    auto get_identifier_name = [](const ASTPtr & ast) -> String { return static_cast<const ASTIdentifier &>(ast).name; };
+    auto get_identifier_name = [](const ASTPtr & ast) { return static_cast<const ASTIdentifier &>(*ast).name; };
 
     /// It is compound identifier
     if (!identifier.children.empty())
