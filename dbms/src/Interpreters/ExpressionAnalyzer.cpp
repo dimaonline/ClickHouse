@@ -2988,7 +2988,7 @@ void ExpressionAnalyzer::collectJoinedColumnsFromJoinOnExpr()
         ASTPtr right_ast = func_equals->arguments->children.at(1)->clone();
 
         auto left_table_belonging = get_table_belonging(left_ast);
-        auto right_table_belonging = get_table_belonging(left_ast);
+        auto right_table_belonging = get_table_belonging(right_ast);
 
         bool can_be_left_part_from_left_table = left_table_belonging.example_only_from_left == nullptr;
         bool can_be_left_part_from_right_table = left_table_belonging.example_only_from_right == nullptr;
