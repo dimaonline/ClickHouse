@@ -2970,6 +2970,24 @@ void ExpressionAnalyzer::collectJoinedColumnsFromJoinOnExpr()
         return table_belonging;
     };
 
+    std::function<void(ASTPtr &, const DatabaseAndTableWithAlias &)> translate_qualified_names;
+    translate_qualified_names = [&](ASTPtr & ast, const DatabaseAndTableWithAlias & source_names)
+    {
+        auto * identifier = typeid_cast<const ASTIdentifier *>(ast.get());
+        if (identifier)
+        {
+            if (identifier->kind == ASTIdentifier::Column)
+            {
+                auto num_components = getNumComponentsToStripInOrderToTranslateQualifiedName(*identifier, source_names);
+                stripIdentifier(ast, num_components);
+            }
+            return;
+        }
+
+        for (const auto & child : ast->children)
+            translate_qualified_names(child, source_names);
+    };
+
     const auto supported_syntax = " Supported syntax: JOIN ON Expr([table.]column, ...) = Expr([table.]column, ...) "
                                   "[AND Expr([table.]column, ...) = Expr([table.]column, ...) ...]";
     auto throwSyntaxException = [&](const String & msg)
@@ -2995,21 +3013,22 @@ void ExpressionAnalyzer::collectJoinedColumnsFromJoinOnExpr()
         bool can_be_right_part_from_left_table = right_table_belonging.example_only_from_left == nullptr;
         bool can_be_right_part_from_right_table = right_table_belonging.example_only_from_right == nullptr;
 
+        auto add_join_keys = [&](ASTPtr & ast_to_left_table, ASTPtr & ast_to_right_table)
+        {
+            translate_qualified_names(ast_to_left_table, left_source_names);
+            translate_qualified_names(ast_to_right_table, right_source_names);
+
+            join_key_asts_left.push_back(ast_to_left_table);
+            join_key_names_left.push_back(ast_to_left_table->getColumnName());
+            join_key_asts_right.push_back(ast_to_right_table);
+            join_key_names_right.push_back(ast_to_right_table->getAliasOrColumnName());
+        };
+
+        /// Default variant when all identifiers may be from any table.
         if (can_be_left_part_from_left_table && can_be_right_part_from_right_table)
-        {
-            /// Default variant when all identifiers may be from any table.
-            join_key_asts_left.push_back(left_ast);
-            join_key_names_left.push_back(left_ast->getColumnName());
-            join_key_asts_right.push_back(right_ast);
-            join_key_names_right.push_back(right_ast->getAliasOrColumnName());
-        }
+            add_join_keys(left_ast, right_ast);
         else if (can_be_left_part_from_right_table && can_be_right_part_from_left_table)
-        {
-            join_key_asts_left.push_back(right_ast);
-            join_key_names_left.push_back(right_ast->getColumnName());
-            join_key_asts_right.push_back(left_ast);
-            join_key_names_right.push_back(left_ast->getAliasOrColumnName());
-        }
+            add_join_keys(right_ast, left_ast);
         else
         {
             auto * left_example = left_table_belonging.example_only_from_left ?
@@ -3032,7 +3051,7 @@ void ExpressionAnalyzer::collectJoinedColumnsFromJoinOnExpr()
     auto * func = typeid_cast<const ASTFunction *>(table_join.on_expression.get());
     if (func && func->name == "and")
     {
-        for (auto expr : func->arguments->children)
+        for (const auto & expr : func->arguments->children)
             add_columns_from_equals_expr(expr);
     }
     else
