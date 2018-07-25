@@ -2982,7 +2982,7 @@ void ExpressionAnalyzer::collectJoinedColumnsFromJoinOnExpr()
     {
         auto * func_equals = typeid_cast<const ASTFunction *>(expr.get());
         if (!func_equals || func_equals->name != "equals")
-            throwSyntaxException("Expected equals expression, got " + queryToString(expr));
+            throwSyntaxException("Expected equals expression, got " + queryToString(expr) + ".");
 
         ASTPtr left_ast = func_equals->arguments->children.at(0)->clone();
         ASTPtr right_ast = func_equals->arguments->children.at(1)->clone();
@@ -3025,7 +3025,7 @@ void ExpressionAnalyzer::collectJoinedColumnsFromJoinOnExpr()
             auto expr_name = queryToString(expr);
 
             throwSyntaxException("In expression " + expr_name + " columns " + left_name + " and " + right_name
-                                 + " are from the same table but from different arguments of equal function");
+                                 + " are from the same table but from different arguments of equal function.");
         }
     };
 
