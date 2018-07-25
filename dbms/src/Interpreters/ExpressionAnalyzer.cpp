@@ -2984,7 +2984,7 @@ void ExpressionAnalyzer::collectJoinedColumnsFromJoinOnExpr()
             return;
         }
 
-        for (const auto & child : ast->children)
+        for (auto & child : ast->children)
             translate_qualified_names(child, source_names);
     };
 
