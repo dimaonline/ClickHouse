@@ -2922,7 +2922,7 @@ void ExpressionAnalyzer::collectJoinedColumnsFromJoinOnExpr()
     const auto & right_table_expression = static_cast<const ASTTableExpression &>(*right_tables_element->table_expression);
 
     auto left_source_names = getTableNameWithAliasFromTableExpression(left_table_expression, context);
-    auto right_source_names = getTableNameWithAliasFromTableExpression(left_table_expression, context);
+    auto right_source_names = getTableNameWithAliasFromTableExpression(right_table_expression, context);
 
     /// Stores examples of columns which are only from one table.
     struct TableBelonging
