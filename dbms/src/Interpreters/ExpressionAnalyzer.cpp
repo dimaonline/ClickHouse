@@ -2849,6 +2849,10 @@ void ExpressionAnalyzer::collectUsedColumns()
     collectJoinedColumns(available_joined_columns, columns_added_by_join);
 
     NameSet required_joined_columns;
+
+    for (const auto & left_key_ast : join_key_asts_left)
+        getRequiredSourceColumnsImpl(left_key_ast, available_columns, required, ignored, {}, required_joined_columns);
+
     getRequiredSourceColumnsImpl(ast, available_columns, required, ignored, available_joined_columns, required_joined_columns);
 
     for (NamesAndTypesList::iterator it = columns_added_by_join.begin(); it != columns_added_by_join.end();)
@@ -3209,7 +3213,8 @@ void ExpressionAnalyzer::getRequiredSourceColumnsImpl(const ASTPtr & ast,
           */
         if (!typeid_cast<const ASTSelectQuery *>(child.get())
             && !typeid_cast<const ASTArrayJoin *>(child.get())
-            && !typeid_cast<const ASTTableExpression *>(child.get()))
+            && !typeid_cast<const ASTTableExpression *>(child.get())
+            && !typeid_cast<const ASTTableJoin *>(child.get()))
             getRequiredSourceColumnsImpl(child, available_columns, required_source_columns,
                 ignored_names, available_joined_columns, required_joined_columns);
     }
